@@ -1,18 +1,5 @@
 #!/bin/bash
 
-#Config
-HOST="app.dev"
-PASS=""
-DBNAME=""
-DBUSER=""
-DBPASS=""
-
-source config.def
-
-export DEBIAN_FRONTEND=noninteractive;
-#Programs
-APTGET="apt-get -qq "
-
 msg()  {
 	echo "--- "$*" ---"
 }
@@ -24,6 +11,19 @@ installpkg() {
 	msg "Installing "$*
 	$APTGET install $*
 }
+
+#Config
+HOST="app.dev"
+PASS=""
+DBNAME=""
+DBUSER=""
+DBPASS=""
+
+. /vagrant/provision/config.def
+
+export DEBIAN_FRONTEND=noninteractive;
+#Programs
+APTGET="apt-get -qq "
 
 msg "Starting Provision"
 
@@ -39,21 +39,24 @@ dpkg-reconfigure -plow grub-pc
 $APTGET upgrade
 $APTGET autoremove
 
+msg "Updating /etc/hosts"
+sed -i 's/localhost/localhost ${HOST}/' /etc/hosts
+
 msg "Base packages"
 installpkg git build-essential htop curl nano wget
 
 msg "Mysql"
-installpkg debconf-utils
-debconf-set-selections <<< "mysql-server mysql-server/root_password password "$PASS
-debconf-set-selections <<< "mysql-server mysql-server/root_password_again password "$PASS
+echo "mysql-server mysql-server/root_password password "$PASS | debconf-set-selections
+echo "mysql-server mysql-server/root_password_again password "$PASS | debconf-set-selections
 installpkg mysql-server mysql-client
+service mysql restart
 
 if [ ! -f /var/log/dbinstalled ];
 then
-    echo "CREATE USER '${DBUSER}'@'localhost' IDENTIFIED BY '${DBPASS}'" | mysql -uroot -p${PASS}
-    echo "CREATE DATABASE ${DBNAME}" | mysql -uroot -p${PASS}
-    echo "GRANT ALL ON ${DBNAME}.* TO '${DBUSER}'@'localhost'" | mysql -uroot -p${PASS}
-    echo "flush privileges" | mysql -uroot -p${PASS}
+    echo "CREATE USER '${DBUSER}'@'localhost' IDENTIFIED BY '${DBPASS}'" | mysql -uroot -p$PASS
+    echo "CREATE DATABASE ${DBNAME}" | mysql -uroot -p$PASS
+    echo "GRANT ALL ON ${DBNAME}.* TO '${DBUSER}'@'localhost'" | mysql -uroot -p$PASS
+    echo "Flush Privileges" | mysql -uroot -p$PASS
     touch /var/log/dbinstalled
 fi
 
@@ -61,10 +64,12 @@ msg "Apache"
 add-apt-repository -y ppa:ondrej/apache2 >/dev/null #For Apache 2.4.10
 $APTGET update
 installpkg apache2
+msg "Configuring Apache2"
+echo "ServerName "$HOST >> /etc/apache2/apache2.conf
 a2enmod proxy_fcgi rewrite > /dev/null
 ln -s /vagrant/provision/config/site.conf /etc/apache2/sites-available/app.dev.conf
-a2ensite app.dev >/dev/null
-a2dissite 000-default >/dev/null
+a2ensite app.dev
+a2dissite 000-default 
 service apache2 restart
 
 msg "PHP5"

@@ -2,10 +2,12 @@
 
 #Config
 HOST="app.dev"
-PASS="honor"
-DBNAME="app"
-DBUSER="app"
-DBPASS="harrington"
+PASS=""
+DBNAME=""
+DBUSER=""
+DBPASS=""
+
+source config.def
 
 export DEBIAN_FRONTEND=noninteractive;
 #Programs
@@ -49,7 +51,7 @@ if [ ! -f /var/log/dbinstalled ];
 then
     echo "CREATE USER '${DBUSER}'@'localhost' IDENTIFIED BY '${DBPASS}'" | mysql -uroot -p${PASS}
     echo "CREATE DATABASE ${DBNAME}" | mysql -uroot -p${PASS}
-    echo "GRANT ALL ON ${DBNAME}.* TO 'mysqluser'@'localhost'" | mysql -uroot -p${PASS}
+    echo "GRANT ALL ON ${DBNAME}.* TO '${DBUSER}'@'localhost'" | mysql -uroot -p${PASS}
     echo "flush privileges" | mysql -uroot -p${PASS}
     touch /var/log/dbinstalled
 fi

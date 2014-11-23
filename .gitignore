@@ -1,4 +1,6 @@
 /.vagrant
 
+/provision/config.def
+
 /src/*
 !/src/.gitkeep

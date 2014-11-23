@@ -18,6 +18,7 @@ msg()  {
 }
 err() {
 	echo "*** "$*" ***"
+	exit 1
 }
 installpkg() {
 	msg "Installing "$*
@@ -57,7 +58,7 @@ then
 fi
 
 msg "Apache"
-add-apt-repository -y ppa:ondrej/apache2 >/dev/null
+add-apt-repository -y ppa:ondrej/apache2 >/dev/null #For Apache 2.4.10
 $APTGET update
 installpkg apache2
 a2enmod proxy_fcgi rewrite > /dev/null
@@ -70,4 +71,8 @@ msg "PHP5"
 installpkg php5-fpm php5-curl php5-gd php5-sqlite php5-mcrypt php5-mysqlnd php5-cli php5-dev 
 ln -s /vagrant/provision/config/php.ini /etc/php5/mods-available/app.dev.ini
 php5enmod app.dev
+ln -s /vagrant/provision/config/pool.conf /etc/php5/fpm/pool.d/app.dev.conf
+rm /etc/php5/fpm/pool.d/www.conf
 service php5-fpm restart
+
+exit 0

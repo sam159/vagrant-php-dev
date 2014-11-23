@@ -56,6 +56,7 @@ fi
 
 msg "Apache"
 add-apt-repository -y ppa:ondrej/apache2 >/dev/null
+$APTGET update
 installpkg apache2
 a2enmod proxy_fcgi rewrite > /dev/null
 ln -s /vagrant/provision/config/site.conf /etc/apache2/sites-available/app.dev.conf

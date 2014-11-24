@@ -4,3 +4,6 @@
 
 /src/*
 !/src/.gitkeep
+
+/index.html
+/html/*

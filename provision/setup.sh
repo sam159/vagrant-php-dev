@@ -39,6 +39,13 @@ dpkg-reconfigure -plow grub-pc
 $APTGET upgrade
 $APTGET autoremove
 
+msg "Setup Swapfile"
+dd if=/dev/zero of=/.swapfile bs=1024k count=1024 >/dev/null #1024MB
+chmod 600 /.swapfile
+mkswap /.swapfile
+echo "/.swapfile	none	swap	none	0	0" >> /etc/fstab
+swapon -a
+
 msg "Updating /etc/hosts"
 sed -i 's/localhost/localhost ${HOST}/' /etc/hosts
 
@@ -62,6 +69,7 @@ fi
 
 msg "Apache"
 add-apt-repository -y ppa:ondrej/apache2 >/dev/null #For Apache 2.4.10
+apt-key adv --keyserver keyserver.ubuntu.com --recv E5267A6C >/dev/null
 $APTGET update
 installpkg apache2
 msg "Configuring Apache2"
@@ -70,6 +78,8 @@ a2enmod proxy_fcgi rewrite > /dev/null
 ln -s /vagrant/provision/config/site.conf /etc/apache2/sites-available/app.dev.conf
 a2ensite app.dev
 a2dissite 000-default 
+rm /etc/apache2/mods-enabled/mpm_event.conf
+ln -s /vagrant/provision/config/mpm_event.conf /etc/apache2/mods-enabled/mpm_event.conf
 service apache2 restart
 
 msg "PHP5"
